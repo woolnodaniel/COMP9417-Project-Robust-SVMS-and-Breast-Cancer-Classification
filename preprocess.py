@@ -17,22 +17,17 @@ see the jupyter notebook
 included in the linked git repository.
 """
 
+import argparse
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import sys
 
-plot = False
-if len(sys.argv) == 2:
-    if sys.argv[1] == '--plot':
-        plot = True
-    else:
-        print('Preprocessing without plot. To see plot, run')
-        print('\tpython3 preprocess.py --plot')
-else:
-    print('Preprocessing without plot. To see plot, run')
-    print('\tpython3 preprocess.py --plot')
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--plot',type=bool,default=False,help="plot: True if wanting to display plots (default False)")
+args = parser.parse_args()
 
 #read in data as a Pandas data frame.
 ds = pd.read_csv('data.csv')
@@ -64,7 +59,7 @@ for col in ds.columns:
 
 # correlation and (if desired) heatmap
 corr_col = ds.corr()['diagnosis']
-if plot:
+if args.plot:
     plt.figure()
     heat_map = sns.heatmap([corr_col], square=True, cbar_kws=dict(use_gridspec=False, location="top"))
     heat_map.set_yticklabels(heat_map.get_yticklabels(), rotation=0)
@@ -79,7 +74,7 @@ ds = ds.drop(drop_list,axis=1)
 print(f'New number of features (not including target): {ds.shape[1]-1}')
 
 #save as new csv file for use in other files.
-file = open("processed_data_2.csv", "w")
+file = open("processed_data.csv", "w")
 ds.to_csv(file, index=False)
 file.close()
 
