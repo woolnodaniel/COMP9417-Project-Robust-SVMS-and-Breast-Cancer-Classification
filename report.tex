@@ -60,7 +60,7 @@
 {\it \large{Daniel Woolnough, z5116128, Group h5116128, \today}}
 \end{center}
 \section*{Introduction}
-Support Vector Machines (SVMs) are a useful machine learning tool for classification of labelled data into distinct sets, and are capable of modelling both linear and non-linear separable datasets via kernelization and projection into higher dimensional spaces. Recently, the Robust SVM (rSVM) has been proposed, which provides immunity to uncertainty in the dataset and has an easy reformulation as a second-order cone program (SOCP), a convex optimisation problem that is easily solvable by, e.g., interior-point methods. Other SVMs are the Doubly-regularized SVM (DrSVM), the Hybrid Huberised SVM (HHSVM) and the $pg$-SVM. 
+Support Vector Machines (SVMs) are a useful machine learning tool for classification of labelled data into distinct sets, and are capable of modelling both linear and non-linear separable datasets via kernelization and projection into higher dimensional spaces. Recently, the Robust SVM (rSVM) has been proposed, which provides immunity to uncertainty in the dataset and has an easy reformulation as a second-order cone program (SOCP), a convex optimisation problem that is easily solvable by, e.g., interior-point methods. Other SVMs are the $L_1$-SVM, and the Doubly-regularized SVM (DrSVM). 
 
 The aim of this report is to assess some of these SVMs, and some other classification techniques (including a decision tree, a naive Bayes approach, and a neural network) on a well-used dataset, the Wisconsin Breast Cancer dataset (available here: \url{https://www.kaggle.com/uciml/breast-cancer-wisconsin-data}). In particular, we wish to evaluate the rSVM in the case where the given training set is noisy/uncertain, and classifications need to be made taking this into account. 
 
@@ -151,7 +151,7 @@ From the results we can see that, on average, the tuned SVM just outperforms the
 
 \section{Different SVM Models}
 
-We now present the four different SVM models that we will compare in the next section: the standard SVM, the DrSVM, the $pq$-SVM, and the robust SVM. Each of these have been implemented from scratch in MATLAB, with the use of the optimisation package MOSEK, interfaced through YALMIP. The corresponding MATLAB live script gives a simple example demonstrating the implementation and solution retrieval for each.
+We now present the four different SVM models that we will compare in the next section: the standard SVM, the DrSVM, the HHSVM, and the robust SVM. Each of these have been implemented from scratch in MATLAB, with the use of the optimisation package MOSEK, interfaced through YALMIP. The corresponding MATLAB live script gives a simple example demonstrating the implementation and solution retrieval for each.
 
 We denote the number of datapoints as $m$, and the number of features as $n$. 
 
@@ -159,7 +159,7 @@ We denote the number of datapoints as $m$, and the number of features as $n$.
 
 For this report, we take the standard SVM model as described in the lectures to be that with soft margins, as we do not want to assume linear separability. The primal formulation for this problem is
 \begin{eqnarray*}
-& \ds \min_{\pmb{w}\in\mathbb{R}^m,\gamma,\pmb{\xi}\in\mathbb{R}^n} & \frac{1}{2}\Vert \bm{w} \Vert_2^2  + \lambda\bm{e}^T\bm{\xi} 
+& \ds \min_{\pmb{w}\in\mathbb{R}^n,\gamma,\pmb{\xi}\in\mathbb{R}^m} & \frac{1}{2}\Vert \bm{w} \Vert_2^2  + \lambda\bm{e}^T\bm{\xi} 
 \\
 & \mbox{ subject to } & Y(X\bm{w} - \bm{e}\gamma) + \bm{\xi} \geq \bm{e} 
 \\
@@ -169,27 +169,111 @@ where $\bm{x}_i\in\mathbb{R}^n$ is the $i^{\rm th}$ data point, $X\in\mathbb{R}^
 
 Typically we solve $(SVM)$ by instead formulating and solving the dual problem, as this (a) allows for us to more efficiently the solve the problem if we wish to apply the kernel trick for high-dimensional embedding, and (b) still be able to retrieve the values for $\bm{w}$ and $\gamma$. The dual problem is given by
 \begin{eqnarray*}
-(SVM) & \ds\min_{\pmb{u}\in\mathbb{R}^m} & \frac{1}{2} \bm{u}YXX^TY^T\bm{u} - \bm{e}^T\bm{u}
+(SVM) & \ds\min_{\pmb{u}\in\mathbb{R}^m} & \frac{1}{2} \bm{u}^TYXX^TY^T\bm{u} - \bm{e}^T\bm{u}
 \\
 & \mbox{subject to } & \bm{e}^TY^T\bm{u} = 0
 \\
-& & 0 \leq \bm{u} \leq \nu\bm{e}
+& & 0 \leq \bm{u} \leq \lambda\bm{e}
 \end{eqnarray*}
 The original solution is then retrieved as follows: $\bm{x}_j$ is a support vector iff $u_j\neq 0$, $j=1,\dots,m$; $\bm{w} = X^TY^T\bm{u}$; and $\gamma$ satisfies $y_j(\bm{w}^T\bm{x}_j - \gamma) = 1$ for support vector $\bm{x}_j$. 
 
+In our experiments, we implement the dual formulation. 
+
+\subsection{$L_1$-SVM \cite{l1norm}}
+
+The $L_1$-norm SVM is very similar to the standard SVM, except that it replaces the regularization term for $\bm{w}$ with that given by use of the $L_1$ norm instead. 
+
+\begin{eqnarray*}
+& \ds \min_{\pmb{w}\in\mathbb{R}^n,\gamma,\pmb{\xi}\in\mathbb{R}^m} & \Vert \bm{w} \Vert_1  + \lambda\bm{e}^T\bm{\xi} 
+\\
+& \mbox{ subject to } & Y(X\bm{w} - \bm{e}\gamma) + \bm{\xi} \geq \bm{e} 
+\\
+& & \bm{\xi} \geq 0
+\end{eqnarray*}
+Due to the fact that $\Vert \bm{w} \Vert$ is not differentiable at $\bm{w} = \bm{0}$, an alternative reformulation for the above comes from Mangasarian \cite{pq}, wherein we set $\bm{w} = \bm{p} - \bm{q}$, for $\bm{p}, \bm{q} \in \mathbb{R}^n_+$. This gives rise to the alternative formulation as a standard linear program:
+\begin{eqnarray*}
+(L_1SVM) & \ds\min_{\bm{p},\bm{q}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m} & \bm{e}^T_n(\bm{p} + \bm{q}) + \lambda\bm{e}^T_m\bm{\xi}
+\\
+& \mbox{subject to } & Y(X(\bm{p} - \bm{q}) - \bm{e}_m\gamma) + \bm{\xi} \geq \bm{e}_m 
+\\
+& & \bm{p}, \bm{q}, \bm{\xi} \geq 0
+\end{eqnarray*}
+One well documented advantage of the above method is that, for large values of $\lambda$, the problem is forced to restrict some weights to 0. In this sense, the problem is also ideal for feature selection: the task of choosing which features are necessary for classification. Feature selection will not be dealt with in this report however. 
+
 \subsection{DrSVM \cite{drsvm}}
 
-\subsection{$pq$-SVM \cite{pqsvm}}
+The Doubly-Regularised SVM (DrSVM) aims to make the best of both of the previous methods, by using \textbf{two} regularization terms in the objective function: one is the previous $L_2$-norm regularization (or \emph{ridge} regularization); the other is the $L_1$-norm (or \emph{lasso}) regularization. The primal formulation is thus given by
+\begin{eqnarray*}
+(DrSVM) & \ds\min_{\pmb{w}\in\mathbb{R}^n, \gamma, \pmb{\xi}\in\mathbb{R}^m} & \ds\frac{\lambda_1}{2}\Vert \bm{w} \Vert_2^2 + \lambda_1 \Vert \bm{w} \Vert_1 + \bm{e}^T\bm{\xi}
+\\
+& \mbox{subject to } & Y(X\bm{w} - \bm{e}\gamma) + \bm{\xi} \geq \bm{e} 
+\\
+& & \bm{\xi} \geq 0
+\end{eqnarray*}
+
+A recent method for efficiently solving the above problem was recently proposed in \cite{pqsvm} which, inspired by the approach by Mangasarian as above, also uses the substitution $\bm{w} = \bm{p} - \bm{q}$ and then, under some simple assumptions, proposes a dual that is quadratic program:
+\begin{eqnarray*}
+& \ds\min_{\bm{u}\in\mathbb{R}^m} & \frac{1}{2}\bm{u}^T\left( \hat{Y}\left(\hat{X}\left(C + \nu I_{2m+n}\right)^{-1}\hat{X} + \bm{e}\bm{e}^T\right)\hat{Y} + M\right)\bm{u} - \bm{e}^T\bm{u}
+\end{eqnarray*}
+where each matrix is in $\mathbb{R}^{(2n+m)\times(2n+m)}$ and is given by
+\[
+\hat{Y} = \begin{pmatrix} Y & 0 \\ 0 & 0 \end{pmatrix}, \ \hat{X} = \begin{pmatrix} 0 & X & -X \\ 0 & 0 & 0 \end{pmatrix}, \ C = \lambda_1\begin{pmatrix} 0 & 0 & 0 \\ 0 & I_n & 0 \\ 0 & 0 & I_n \end{pmatrix}, \mbox{ and } M = (C+\nu I_{2n+m})^{-1}(2\hat{Y}\hat{X}+I_{2n+m})
+\]
+To retrieve our original solution, we do the following:
+\[
+\begin{bmatrix} \bm{\xi} \\ \bm{p} \\ \bm{q} \end{bmatrix} = (C + \nu I_{2n+m})^{-1}((\hat{Y}\hat{X})^T + I_{2n+m})\bm{u}, \enspace, \gamma = -\bm{e}^T\hat{Y}\bm{u}, \bm{w} = \bm{p} - \bm{q}
+\]
 
 \subsection{Robust SVM \cite{rsvm}}
 
+Finally we reach the robust SVM, the main model we wish to evaluate in this paper, in comparison to the non-robust approaches. In practice, the input data is sensitive to error, be it measurement error, data uncertainty, noise, etc. The robust approach makes no assumption on the nature of this uncertainty other than that, for some radius $r_i>0$, $i=1,\dots,m$, each data point is bounded in an $n$-dimensional ball:
+\[
+\bm{x}_i\in\mathcal{U}_i(r_i) = \bar{\bm{x}}_i + r_i\mathbb{B}_n, \quad i=1,\dots,m
+\]
+where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\right\}$ is an $n$-dimensional ball. The robust methodology aims to take this uncertainty into account, and so find a solution to our standard SVM problem that is feasible (satisfies all constraints) no matter where the data points lie in their uncertainty sets $\mathcal{U}_i$:
+\begin{eqnarray*}
+& \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m} & \frac{1}{2}\Vert \bm{w} \Vert_2 + \lambda\bm{e}^T\bm{\xi}
+\\
+& \mbox{subject to } & y_i(\bm{x}_i^T\bm{w} - \gamma) + \xi_i \geq 1, \enspace \forall \bm{x}_i\in\mathcal{U}_i(r_i),\enspace i=1,\dots,m
+\\
+& & \xi_i \geq 0, \enspace i=1,\dots,m, 
+\end{eqnarray*}
+Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into a second-order cone program, that no longer has the semi-infinite constraints posed by the forall quantifier:
+\begin{eqnarray*}
+(rSVM) & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m, t_1, t_2} & \frac{1}{2}t_1 + \lambda t_2
+\\
+& \mbox{subject to } & y_i\left(\bar{\bm{x}}_i^T\bm{w}-\gamma\right) - y_ir_i\Vert\bm{w}\Vert_2 + \xi_i \geq 1
+\\
+& & \Vert \bm{w} \Vert_2 \leq t_1
+\\
+& & \bm{e}^T\bm{\xi} \leq t_2
+\end{eqnarray*}
+We can now progress to testing our four SVM models with regards to their resilience in the face of uncertainty. 
+
+\section{Classification Under Noisy Data}
+In order to evaluate the worth of the rSVM method in comparison to the SVM, the $L_1$SVM, and the DrSVM, we will perform the following experiment:
+\begin{itemize}
+	\item Firstly, after splitting our dataset into training and test sets, we will choose small values for $r_i$, $i=1,\dots,m$, and perturb our $m$ training data points within the uncertainty set $\mathcal{U}_i(r_i)$. 
+	\item We will then train our four models on this perturbed training set. 
+	\item The four models will then be tested on the \emph{original} test set, and evaluated on (a) their accuracy, and (b) their F1 score. 
+\end{itemize}
+The motivation behind this is as follows: given a noisy dataset, we will be testing how well our four models can classify true data. 
+
 \begin{thebibliography}{99}
+
+\bibitem{pqsvm} M. Dunbar, J. Murray, L. A. Cysique, B. J. Brew, V. Jeyakumar: ``Simultaneous classification and feature selection via convex quadratic programming with application to HIV-associated neurocognitive disorder assessment'', \emph{European Journal of Operational Research}, (206), 470-478, 2010. 
+
+\bibitem{rsvm} M. A. Goberna, V. Jeyakumar, G. Li: ``Calculating Radius of Robust Feasibility of Uncertain Linear Conic Programs via Semidefinite Programs'', \emph{UNSW Preprint}, \url{https://arxiv.org/abs/2007.07599}, 2020.
+
+\bibitem{pq} O. L. Mangasarian: ``Exact 1-Norm Support Vector Machines via Unconstrained Convex Differentiable Minimization'', \emph{Journal of Machine Learning Research}, (7), 1517-1530, 2006.
 
 \bibitem{drsvm} L. Wang, J. Zhu, and H. Zou: ``The Doubly Regularized Support Vector Machine'', \emph{Statistica Sinica}, (16), 589–615, 2006.
 
-\bibitem{pqsvm} M. Dunbar, J. Murray, L. Cysique, B. Brew, V. Jeyakumar: ``Simultaneous classification and feature selection via convex quadratic programming with application to HIV-associated neurocognitive disorder assessment'', \emph{European Journal of Operational Research}, (206)2, 470–478, 2010.
+\bibitem{l1norm} J. Zhu, S. Rosset, T. Hastie, R. Tibshirani: ``1-Norm support vector machines'', \url{http://www stat.stanford.edu/~hastie/Papers/}, 2003. 
 
-\bibitem{rsvm} M. A. Goberna, V. Jeyakumar, G. Li: ``Calculating Radius of Robust Feasibility of Uncertain Linear Conic Programs via Semidefinite Programs'', \emph{UNSW Preprint}, \url{https://arxiv.org/abs/2007.07599}, 2020.
+
+
+
 
 
 \end{thebibliography}
