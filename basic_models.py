@@ -16,6 +16,8 @@ parser.add_argument('--search',type=bool,default=False,help='bool: set True if w
             grid search for regularisation parameter for SVM (default False)')
 parser.add_argument('--disable_warnings',type=bool,default=True,help='bool: set to False if warnings are desired.')
 parser.add_argument('--average',type=int,default=1,help='int: take an average over that many simulations (default 1).')
+parser.add_argument('--verbose',type=bool,default=False,help='bool: set true if want to see output of each simulation. \
+            If false, display only first 5 simulations results, and the final averages.')
 args = parser.parse_args()
 
 DT, GNB, NN, SVM = False, False, False, False
@@ -36,7 +38,8 @@ if args.disable_warnings:
     import warnings
     warnings.warn = warn
 
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
@@ -45,7 +48,8 @@ from sklearn.svm import SVC
 # import preprocessed dataset
 ds = pd.read_csv('processed_data.csv')
 
-DT_scores, GNB_scores, NN_scores, SVM_scores = [], [], [], []
+DT_accs, GNB_accs, NN_accs, SVM_accs = [], [], [], []
+DT_f1, GNB_f1, NN_f1, SVM_f1 = [], [], [], []
 
 for i in range(args.average):
 
@@ -60,9 +64,13 @@ for i in range(args.average):
     if DT:
         tree = DecisionTreeClassifier(criterion='entropy', min_samples_leaf=round(0.02*num_training_items))
         tree.fit(X_train,y_train)
-        score = tree.score(X_test,y_test)
-        DT_scores.append(score)
-        print(f'i = {i}: Decision Tree Accuracy: {score:.4}')
+        pred = tree.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+        f1 = f1_score(y_test, pred)
+        DT_accs.append(acc)
+        DT_f1.append(f1)
+        if args.verbose or i < 5:
+            print(f'i = {i}: Decision Tree Accuracy: {acc:.4}; F1 Score: {f1:.4}')
 
 
     # Gaussian Naive Bayes
@@ -73,30 +81,47 @@ for i in range(args.average):
         X_test_NB = X_test[features_to_keep]
         gnb = GaussianNB()
         gnb.fit(X_train_NB,y_train)
-        score = gnb.score(X_test_NB,y_test)
-        GNB_scores.append(score)
-        print(f'i = {i}: Gaussian NB Accuracy: {score:.4}')
+        pred = gnb.predict(X_test_NB)
+        acc = accuracy_score(y_test, pred)
+        f1 = f1_score(y_test, pred)
+        GNB_accs.append(acc)
+        GNB_f1.append(f1)
+        if args.verbose or i < 5:
+            print(f'i = {i}: Gaussian NB Accuracy: {acc:.4}; F1 Score: {f1:.4}')
 
     if NN:
         num_features = X_train.shape[1]
         nn = MLPClassifier(hidden_layer_sizes=(2*num_features,), activation='tanh', \
                            solver='sgd', learning_rate='adaptive', learning_rate_init=0.1)
         nn.fit(X_train,y_train)
-        score = nn.score(X_test,y_test)
-        NN_scores.append(score)
-        print(f'i = {i}: Neural Network Accuracy: {score:.4}')
+        pred = nn.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+        f1 = f1_score(y_test, pred)
+        NN_accs.append(acc)
+        NN_f1.append(f1)
+        if args.verbose or i < 5:
+            print(f'i = {i}: Neural Network Accuracy: {acc:.4}; F1 Score: {f1:.4}')
 
     if SVM:
         svm = SVC(C=0.05, kernel='linear', gamma='scale')
         svm.fit(X_train, y_train)
-        score = svm.score(X_test, y_test)
-        SVM_scores.append(score)
-        print(f'i = {i}: Support Vector Machine Accuracy: {score:.4}')
+        pred = svm.predict(X_test)
+        acc = accuracy_score(y_test, pred)
+        f1 = f1_score(y_test, pred)
+        SVM_accs.append(acc)
+        SVM_f1.append(f1)
+        if args.verbose or i < 5:
+            print(f'i = {i}: Support Vector Machine Accuracy: {acc:.4}; F1 Score: {f1:.4}')
 
-print(f'Decision Tree Accuracy: {np.mean(DT_scores):.4}')
-print(f'Gaussian NB Accuracy: {np.mean(GNB_scores):.4}')
-print(f'Neural Network Accuracy: {np.mean(NN_scores):.4}')
-print(f'Support Vector Machine Accuracy: {np.mean(SVM_scores):.4}')
+if args.average > 1:
+    if DT:
+        print(f'Decision Tree Accuracy: {np.mean(DT_accs):.4}; F1 Score: {np.mean(DT_f1):.4}')
+    if GNB:
+        print(f'Gaussian NB Accuracy: {np.mean(GNB_accs):.4}; F1 Score: {np.mean(GNB_f1):.4}')
+    if NN:
+        print(f'Neural Network Accuracy: {np.mean(NN_accs):.4}; F1 Score: {np.mean(NN_f1):.4}')
+    if SVM:
+        print(f'Support Vector Machine Accuracy: {np.mean(SVM_accs):.4}; F1 Score: {np.mean(SVM_f1):.4}')
 
 if args.search:
     print('----------------------------------------------')

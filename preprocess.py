@@ -37,7 +37,7 @@ ds = ds.drop(['Unnamed: 32', 'id'], axis=1)
 
 #currently, diagnosis columns is classified as "Malignant" or "Benign"
 #transform into 1/0.
-ds.diagnosis = ds.diagnosis.map(lambda x: 1 if x == 'M' else 0)
+ds.diagnosis = ds.diagnosis.map(lambda x: 1 if x == 'M' else -1)
 
 #check for NaN values; if present, replace with the column mean
 if ds.isnull().values.any(): #i.e. there are NaNs
