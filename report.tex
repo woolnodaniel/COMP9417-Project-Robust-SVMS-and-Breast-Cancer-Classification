@@ -175,7 +175,7 @@ Typically we solve $(SVM)$ by instead formulating and solving the dual problem, 
 \\
 & & 0 \leq \bm{u} \leq \lambda\bm{e}
 \end{eqnarray*}
-The original solution is then retrieved as follows: $\bm{x}_j$ is a support vector iff $u_j\neq 0$, $j=1,\dots,m$; $\bm{w} = X^TY^T\bm{u}$; and $\gamma$ satisfies $y_j(\bm{w}^T\bm{x}_j - \gamma) = 1$ for support vector $\bm{x}_j$. 
+The original solution is then retrieved as follows: $\bm{x}_j$ is a support vector iff $0 < u_j < \lambda$, $j=1,\dots,m$; $\bm{w} = X^TY^T\bm{u}$; and $\gamma$ satisfies $y_j(\bm{w}^T\bm{x}_j - \gamma) = 1$ for support vector $\bm{x}_j$. 
 
 In our experiments, we implement the dual formulation. 
 
@@ -213,7 +213,7 @@ The Doubly-Regularised SVM (DrSVM) aims to make the best of both of the previous
 
 A recent method for efficiently solving the above problem was recently proposed in \cite{pqsvm} which, inspired by the approach by Mangasarian as above, also uses the substitution $\bm{w} = \bm{p} - \bm{q}$ and then, under some simple assumptions, proposes a dual that is quadratic program:
 \begin{eqnarray*}
-& \ds\min_{\bm{u}\in\mathbb{R}^m} & \frac{1}{2}\bm{u}^T\left( \hat{Y}\left(\hat{X}\left(C + \nu I_{2m+n}\right)^{-1}\hat{X} + \bm{e}\bm{e}^T\right)\hat{Y} + M\right)\bm{u} - \bm{e}^T\bm{u}
+& \ds\min_{\bm{u}\in\mathbb{R}^m} & \frac{1}{2}\bm{u}^T\left( \hat{Y}\left(\hat{X}\left(C + \nu I_{2n+m}\right)^{-1}\hat{X}^T + \bm{e}\bm{e}^T\right)\hat{Y} + M\right)\bm{u} - \bm{e}^T\bm{u}
 \end{eqnarray*}
 where each matrix is in $\mathbb{R}^{(2n+m)\times(2n+m)}$ and is given by
 \[
@@ -232,7 +232,7 @@ Finally we reach the robust SVM, the main model we wish to evaluate in this pape
 \]
 where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\right\}$ is an $n$-dimensional ball. The robust methodology aims to take this uncertainty into account, and so find a solution to our standard SVM problem that is feasible (satisfies all constraints) no matter where the data points lie in their uncertainty sets $\mathcal{U}_i$:
 \begin{eqnarray*}
-& \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m} & \frac{1}{2}\Vert \bm{w} \Vert_2 + \lambda\bm{e}^T\bm{\xi}
+& \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m} & \frac{1}{2}\Vert \bm{w} \Vert_2^2 + \lambda\bm{e}^T\bm{\xi}
 \\
 & \mbox{subject to } & y_i(\bm{x}_i^T\bm{w} - \gamma) + \xi_i \geq 1, \enspace \forall \bm{x}_i\in\mathcal{U}_i(r_i),\enspace i=1,\dots,m
 \\
@@ -240,14 +240,52 @@ where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\r
 \end{eqnarray*}
 Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into a second-order cone program, that no longer has the semi-infinite constraints posed by the forall quantifier:
 \begin{eqnarray*}
-(rSVM) & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m, t_1, t_2} & \frac{1}{2}t_1 + \lambda t_2
+(rSVM) & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m, t_1, t_2} & \frac{1}{2}t_1^2 + \lambda t_2
 \\
 & \mbox{subject to } & y_i\left(\bar{\bm{x}}_i^T\bm{w}-\gamma\right) - y_ir_i\Vert\bm{w}\Vert_2 + \xi_i \geq 1
 \\
 & & \Vert \bm{w} \Vert_2 \leq t_1
 \\
 & & \bm{e}^T\bm{\xi} \leq t_2
+\\
+& & \bm{\xi}\geq 0
 \end{eqnarray*}
+Notice that in the case where there is no uncertainty (i.e. $r_i=0$, $i=1,\dots,m$) then $(rSVM)$ reduces to $(SVM)$, as would be expected.
+
+\subsection*{Simple Comparison}
+
+A simple comparison between the four methods is demonstrated below. The plots were generated with \texttt{svms\_example.m}, and can also be examined interactively with the accompanying MATLAB Live script.
+
+\begin{figure}[hbt!]
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\captionsetup{font=footnotesize}
+		\includegraphics[width=\linewidth]{stand}
+		\caption{Standard SVM model. Support vectors in green.}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\captionsetup{font=footnotesize}
+		\includegraphics[width=\linewidth]{l1}
+		\caption{$L_1$-SVM model.}
+	\end{subfigure}
+	\newline
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\captionsetup{font=footnotesize}
+		\includegraphics[width=\linewidth]{dr}
+		\caption{DrSVM model.}
+	\end{subfigure}
+	\begin{subfigure}{.5\textwidth}
+		\centering
+		\captionsetup{font=footnotesize}
+		\includegraphics[width=\linewidth]{robust}
+		\caption{Robust SVM model. Uncertainty sets circled. In this case, the ``support vector'' is the cross located at approximate $(3.125,3.25)$, as the margin borders the uncertainty set.}
+	\end{subfigure}
+\end{figure}
+
+As we can see, the robust method does not identify any of the points as support vectors. This is because, inherent in the methodology, the formulation actually considers the \emph{worst-case} in the uncertainty set surrounding each point. To this effect, we can observe that the cross located at approximately $(3.125,3.25)$ is the ``support vector'' chosen, as the margin borders the uncertainty set at its extremal value (in the 2-norm sense). 
+
 We can now progress to testing our four SVM models with regards to their resilience in the face of uncertainty. 
 
 \section{Classification Under Noisy Data}
