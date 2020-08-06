@@ -1,3 +1,4 @@
+
 function [w,gamma,sv] = standard_svm(x,y,lambda)    
     %define parameters in desired form
     m = size(x,1); 
@@ -33,4 +34,4 @@ function [w,gamma,sv] = standard_svm(x,y,lambda)
     new_sv = sv(I);
     ind = new_sv(ceil(end/2),2);
     gamma = -(1 - y(ind)*w'*x(ind,:)')/y(ind);
-end 
+end

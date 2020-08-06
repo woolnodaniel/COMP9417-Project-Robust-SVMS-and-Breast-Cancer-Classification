@@ -213,15 +213,18 @@ The Doubly-Regularised SVM (DrSVM) aims to make the best of both of the previous
 
 A recent method for efficiently solving the above problem was recently proposed in \cite{pqsvm} which, inspired by the approach by Mangasarian as above, also uses the substitution $\bm{w} = \bm{p} - \bm{q}$ and then, under some simple assumptions, proposes a dual that is quadratic program:
 \begin{eqnarray*}
-& \ds\min_{\bm{u}\in\mathbb{R}^m} & \frac{1}{2}\bm{u}^T\left( \hat{Y}\left(\hat{X}\left(C + \nu I_{2n+m}\right)^{-1}\hat{X}^T + \bm{e}\bm{e}^T\right)\hat{Y} + M\right)\bm{u} - \bm{e}^T\bm{u}
+& \ds\min_{\bm{u}\in\mathbb{R}^{2n+m}} & \frac{1}{2}\bm{u}^T Q \bm{u} - \hat{\bm{e}}^T\bm{u}
 \end{eqnarray*}
-where each matrix is in $\mathbb{R}^{(2n+m)\times(2n+m)}$ and is given by
-\[
-\hat{Y} = \begin{pmatrix} Y & 0 \\ 0 & 0 \end{pmatrix}, \ \hat{X} = \begin{pmatrix} 0 & X & -X \\ 0 & 0 & 0 \end{pmatrix}, \ C = \lambda_1\begin{pmatrix} 0 & 0 & 0 \\ 0 & I_n & 0 \\ 0 & 0 & I_n \end{pmatrix}, \mbox{ and } M = (C+\nu I_{2n+m})^{-1}(2\hat{Y}\hat{X}+I_{2n+m})
-\]
+where
+{\allowdisplaybreaks
+\begin{align*}
+& \hat{e} = \begin{pmatrix} e_m \\ 0_{2n} \end{pmatrix}, \ \hat{Y} = \begin{pmatrix} Y & 0 \\ 0 & 0 \end{pmatrix}, \ \hat{X} = \begin{pmatrix} 0 & X & -X \\ 0 & 0 & 0 \end{pmatrix}, \ C = \lambda_1\begin{pmatrix} 0 & 0 & 0 \\ 0 & I_n & 0 \\ 0 & 0 & I_n \end{pmatrix}, 
+\\
+& V = \left(C + \nu I_{2n+m}\right)^{-1}, \mbox{  and  } Q = \left(\hat{Y}\hat{X} + I_{2n+m}\right)V\left(\hat{Y}\hat{X}+I_{2n+m}\right)^T + \hat{Y}\hat{\bm{e}}\hat{\bm{e}}^T\hat{Y}^T
+\end{align*}}
 To retrieve our original solution, we do the following:
 \[
-\begin{bmatrix} \bm{\xi} \\ \bm{p} \\ \bm{q} \end{bmatrix} = (C + \nu I_{2n+m})^{-1}((\hat{Y}\hat{X})^T + I_{2n+m})\bm{u}, \enspace, \gamma = -\bm{e}^T\hat{Y}\bm{u}, \bm{w} = \bm{p} - \bm{q}
+\begin{bmatrix} \bm{\xi} \\ \bm{p} \\ \bm{q} \end{bmatrix} = V\left(\left(\hat{Y}\hat{X}\right)^T + I_{2n+m}\right)\bm{u}, \enspace \gamma = -\bm{e}^T\hat{Y}\bm{u}, \enspace \bm{w} = \bm{p} - \bm{q}
 \]
 
 \subsection{Robust SVM \cite{rsvm}}
@@ -238,7 +241,7 @@ where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\r
 \\
 & & \xi_i \geq 0, \enspace i=1,\dots,m, 
 \end{eqnarray*}
-Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into a second-order cone program, that no longer has the semi-infinite constraints posed by the forall quantifier:
+Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into a second-order cone program, that no longer has the semi-infinite constraints posed by the for-all quantifier:
 \begin{eqnarray*}
 (rSVM) & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m, t_1, t_2} & \frac{1}{2}t_1^2 + \lambda t_2
 \\
@@ -280,11 +283,11 @@ A simple comparison between the four methods is demonstrated below. The plots we
 		\centering
 		\captionsetup{font=footnotesize}
 		\includegraphics[width=\linewidth]{robust}
-		\caption{Robust SVM model. Uncertainty sets circled. In this case, the ``support vector'' is the cross located at approximate $(3.125,3.25)$, as the margin borders the uncertainty set.}
+		\caption{Robust SVM model. Uncertainty sets circled. In this case, the ``support vectors'' are the data points whose uncertainty sets' boundaries are tangent to the margin.}
 	\end{subfigure}
 \end{figure}
 
-As we can see, the robust method does not identify any of the points as support vectors. This is because, inherent in the methodology, the formulation actually considers the \emph{worst-case} in the uncertainty set surrounding each point. To this effect, we can observe that the cross located at approximately $(3.125,3.25)$ is the ``support vector'' chosen, as the margin borders the uncertainty set at its extremal value (in the 2-norm sense). 
+As we can see, the robust method does not identify any of the points as support vectors. This is because, inherent in the methodology, the formulation actually considers the \emph{worst-case} in the uncertainty set surrounding each point. To this effect, we can observe that there are several candidate ``support vectors'', which are the data points whose uncertainty sets' boundaries are tangent to the margin, at their extremal value (in the 2-norm sense); i.e. the squares at approximately $(3.25, 2.75)$ and $(3.5,2.5)$, or the triangle at approximately $(4.75,3.5)$. 
 
 We can now progress to testing our four SVM models with regards to their resilience in the face of uncertainty. 
 
