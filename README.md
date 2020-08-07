@@ -25,7 +25,7 @@ This section defines three different type of MATLAB files:
 ### Section 4: Robust Comparison on Breast Cancer Dataset
 The processed dataset and the previous model functions are included again in this folder for ease. New MATLAB files are:
 - ``SVM.m``: a basic MATLAB class definition for an SVM model. Specialised classes are derived from this.
-- ``standardSVM``, ``L1SVM``, ``DrSVM``, ``robustSVM``: specialised MATLAB classes for the four methods. Associated methods include ``fit``, ``predict``, ``retune`` and ``run``. 
+- ``standardSVM.m``, ``L1SVM.m``, ``DrSVM.m``, ``robustSVM.m``: specialised MATLAB classes for the four methods. Associated methods include ``fit``, ``predict``, ``retune`` and ``run``. 
 - ``accuracy.m`` and ``f1_score.m``: functions to return the accuracy and F1-score for a prediction vector. Inputs: target vector, prediction vector.
 - ``kfolds_index.m``: function that, given a training set and a number of folds ``kf_splits``, returns a cell of arrays, each containing indices for the training/test set to be split into for ``kf_splits``-folds cross validation.
 - ``parameter_tune.m``: function that takes as input the model, the number of folds, ``X_train`` and ``y_train``, and performs k-folds cross validation to determine the optimal value of the hyperparameter for that model (note: particularly for the robust model, this function can take a very long time to run). 
