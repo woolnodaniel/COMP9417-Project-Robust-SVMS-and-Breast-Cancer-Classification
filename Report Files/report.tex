@@ -55,7 +55,7 @@
 \begin{center}
 \textbf{\large{COMP9417 Machine Learning Project}}
 \\[10pt]
-\textbf{\huge{Classification via Robust SVMs: A Comparison on the Wisconsin Breast Cancer Dataset}}
+\textbf{\huge{SVM Classification under Data Uncertainty: A Comparison on the Wisconsin Breast Cancer Dataset}}
 \\[10pt]
 {\it \large{Daniel Woolnough, z5116128, Group h5116128, \today}}
 \end{center}
@@ -68,27 +68,29 @@ This report is broken up into four sections:
 \begin{enumerate}
 	\item We describe the dataset and the preprocessing carried out on it, to prepare it for use. 
 	\item We compare a Decision Tree, a Gaussian Naive Bayes classifier, a Two-Layered Perceptron (Neural Network), and a standard SVM by their performance on the (preprocessed) dataset. 
-	\item We define the mathematical formulations of the classic SVM, the DrSVM, and the rSVM, that are used to implement the methods in MATLAB. MATLAB has been chosen for its more powerful optimisation toolkits and its more user-friendly interface. 
+	\item We define the mathematical formulations of the classic SVM, the DrSVM, and the rSVM, that are used to implement the methods in MATLAB. MATLAB has been chosen for its more powerful optimisation toolkits and its more user-friendly interface, as well as it's ability to program in an object-oriented fashion. 
 	\item Finally, we evaluate these three SVMs on the dataset, now affected by noise. 
 \end{enumerate}
 
-The selected metric over which we evaluate models is simply the raw accuracy of the model on the dataset, as expected on the Kaggle webpage.
+The selected metric over which we evaluate models is simply the raw accuracy of the model on the dataset, as expected on the Kaggle webpage. We do however, also provide the F1 score, due to a slight class imbalance in the data.
+
+Supplementary material (all code and some accompanying notebooks) can be found at \url{https://github.com/woolnodaniel/COMP9417-Project-Robust-SVMS-and-Breast-Cancer-Classification}. This report and all code, excluding notebooks, are completely self contained; notebooks are provided simply for completeness.
 
 \section{The Wisconsin Breast Cancer Dataset, and Preprocessing}
 
-The dataset contains 569 items and 32 columns:
+The dataset contains 569 data points and 32 features describing breast cancers:
 \begin{itemize}
-	\item The first column is the item ID, numbered from 0 through 568. 
-	\item The second column is the target, which is the diagnosis of the cancer as malignant (M) or benign (B). There are 357 benign diagnoses, and 212 malignant diagnoses, giving a class distribution of $[0.63, 0.37]$. 
-	\item The remaining thirty columns contain the mean, standard error, and extremal value (worst-case measurement) of 10 features: radius, texture, perimeter, area, smoothness, compactness, concavity, concave points, symmetry, and fractal dimension. 
+	\item The first feature is the item ID, numbered from 0 through 568. 
+	\item The second feature is the target, which is the diagnosis of the cancer as malignant (M) or benign (B). There are 357 benign diagnoses, and 212 malignant diagnoses, giving a class distribution of $[0.63, 0.37]$. 
+	\item The remaining thirty features contain the mean, standard error, and extremal value (worst-case measurement) of 10 features: radius, texture, perimeter, area, smoothness, compactness, concavity, concave points, symmetry, and fractal dimension. 
 \end{itemize}
 For this dataset the following preprocessing was done:
 \begin{itemize}
 	\item The ID column was dropped, as it does not affect the diagnosis. 
 	\item The diagnoses were mapped to the numeric values: 0 if benign, 1 if malignant. 
 	\item It was revealed there were no missing or NaN values in the dataset. 
-	\item Each column was normalised, by recentering at 0 (subtracting the mean), and dividing through byb the standard deviation. 
-	\item Finally, columns that had a correlation coefficient $< 0.1$ with the target value were dropped, as these were decided to be uncorrelated with the target, and therefore would not affect the diagnosis. 
+	\item Each feature was normalised, by re-centering at 0 (subtracting the mean), and dividing through by the standard deviation (excluding the target, of course). 
+	\item Finally, features that had a correlation coefficient $< 0.1$ with the target value were dropped, as these were decided to be uncorrelated with the target, and therefore would not affect the diagnosis. 
 \end{itemize}
 The correlation of each feature with the diagnosis (ordered as in the dataset, so diagnosis at position 0, etc.) is shown below. 
 
@@ -97,7 +99,7 @@ The correlation of each feature with the diagnosis (ordered as in the dataset, s
 	\includegraphics[width=0.75\textwidth]{corr}
 \end{figure}
 
-This process is carried out by \texttt{preprocessing.py}, which then saves the resulting dataset in a new csv file. The corresponding notebook also demonstrates this process step by step. 
+Thus, features 10, 12, 15, 19, and 20 were removed from the dataset. This process is carried out by \texttt{preprocessing.py}, which then saves the resulting dataset in a new csv file. The corresponding notebook also demonstrates this process step by step. 
 
 \section{Comparison of Non-Robust Methods}
 
@@ -106,7 +108,7 @@ Taking our preprocessed dataset, we wish to make some preliminary comparisons of
 	\item A decision tree, with the minimum number of samples at each leaf set to 2\% of the training set, to avoid overfitting. It was determined that anything less than 1\% would overfit, while anything over 4\% would underfit. 
 	\item A Gaussian Naive Bayes classifier. A Gaussian model was chosen since our data was previously normalised. To accommodate the Bayesian assumption of independence of features (which clearly doesn't hold between, for example, radius mean, standard error, and extremal value), this classifier only considered the extremal values of each core feature. 
 	\item A Two-Layered Perceptron (neural network). The hidden layer was chosen to be twice the size of the input dimension (i.e. twice the number of features), with tanh activation at the hidden layer, and sigmoid activation at the output. The model was trained via stochastic gradient descent, and an adaptive learning rate initialised at 0.1. 
-	\item A Support Vector Machine, with a linear kernel function and regularisation parameter set to 0.05. The regularisation parameter was determined through a grid search which showed the optimal choice to mostly lie in the range $[0, 0.1]$. 
+	\item A Support Vector Machine, with a linear kernel function and regularisation parameter set to 0.05. The regularisation parameter was determined through a 5-fold cross-validation grid search which showed the optimal choice to lie in the range $[0, 0.1]$. 
 \end{itemize}
 For 100 simulations, a model was created and then trained on 80\% of the dataset, and tested on the remaining 20\%. For each simulation the accuracy (proportion of predictions which were correct) were recorded, as was the average of all simulations; see Table 1. We also recorded the F1 score for each model, for each simulation, to assess the reliability of the accuracy given the slight class imbalance; see Table 2. 
 
@@ -151,7 +153,7 @@ From the results we can see that, on average, the tuned SVM just outperforms the
 
 \section{Different SVM Models}
 
-We now present the four different SVM models that we will compare in the next section: the standard SVM, the DrSVM, the HHSVM, and the robust SVM. Each of these have been implemented from scratch in MATLAB, with the use of the optimisation package MOSEK, interfaced through YALMIP. The corresponding MATLAB live script gives a simple example demonstrating the implementation and solution retrieval for each.
+We now present the four different SVM models that we will compare in the next section: the standard SVM, the $L_1$-SVM, the DrSVM, and the robust SVM. Each of these have been implemented from scratch in MATLAB, with the use of the optimisation package MOSEK, interfaced through YALMIP. The corresponding notebook gives a simple example demonstrating the implementation and solution retrieval for each. 
 
 We denote the number of datapoints as $m$, and the number of features as $n$. 
 
@@ -177,7 +179,7 @@ Typically we solve $(SVM)$ by instead formulating and solving the dual problem, 
 \end{eqnarray*}
 The original solution is then retrieved as follows: $\bm{x}_j$ is a support vector iff $0 < u_j < \lambda$, $j=1,\dots,m$; $\bm{w} = X^TY^T\bm{u}$; and $\gamma$ satisfies $y_j(\bm{w}^T\bm{x}_j - \gamma) = 1$ for support vector $\bm{x}_j$. 
 
-In our experiments, we implement the dual formulation. 
+In our experiments, we implement the dual formulation. As it was observed to perform well in the previous section, a linear kernel is used. 
 
 \subsection{$L_1$-SVM \cite{l1norm}}
 
@@ -211,29 +213,29 @@ The Doubly-Regularised SVM (DrSVM) aims to make the best of both of the previous
 & & \bm{\xi} \geq 0
 \end{eqnarray*}
 
-A recent method for efficiently solving the above problem was recently proposed in \cite{pqsvm} which, inspired by the approach by Mangasarian as above, also uses the substitution $\bm{w} = \bm{p} - \bm{q}$ and then, under some simple assumptions, proposes a dual that is quadratic program:
+A recent method for efficiently solving the above problem was recently proposed in \cite{pqsvm} which, inspired by the approach by Mangasarian as above, also uses the substitution $\bm{w} = \bm{p} - \bm{q}$ and then, under some simple assumptions, proposes a (relaxed, not exact) dual that is quadratic program:
 \begin{eqnarray*}
 & \ds\min_{\bm{u}\in\mathbb{R}^{2n+m}} & \frac{1}{2}\bm{u}^T Q \bm{u} - \hat{\bm{e}}^T\bm{u}
 \end{eqnarray*}
 where
 {\allowdisplaybreaks
 \begin{align*}
-& \hat{e} = \begin{pmatrix} e_m \\ 0_{2n} \end{pmatrix}, \ \hat{Y} = \begin{pmatrix} Y & 0 \\ 0 & 0 \end{pmatrix}, \ \hat{X} = \begin{pmatrix} 0 & X & -X \\ 0 & 0 & 0 \end{pmatrix}, \ C = \lambda_1\begin{pmatrix} 0 & 0 & 0 \\ 0 & I_n & 0 \\ 0 & 0 & I_n \end{pmatrix}, 
+& \hat{e} = \begin{pmatrix} e_m \\ 0_{2n} \end{pmatrix}, \ \hat{Y} = \begin{pmatrix} Y & 0 \\ 0 & 0 \end{pmatrix}, \ \hat{X} = \begin{pmatrix} 0 & X & -X \\ 0 & 0 & 0 \end{pmatrix}, \ C = \begin{pmatrix} 0 & 0 & 0 \\ 0 & I_n & 0 \\ 0 & 0 & I_n \end{pmatrix}, 
 \\
 & V = \left(C + \nu I_{2n+m}\right)^{-1}, \mbox{  and  } Q = \left(\hat{Y}\hat{X} + I_{2n+m}\right)V\left(\hat{Y}\hat{X}+I_{2n+m}\right)^T + \hat{Y}\hat{\bm{e}}\hat{\bm{e}}^T\hat{Y}^T
 \end{align*}}
-To retrieve our original solution, we do the following:
+and where $\nu$ combines the previous two regularization parameters $\lambda_1$ and $\lambda_2$. To retrieve our original solution, we do the following:
 \[
 \begin{bmatrix} \bm{\xi} \\ \bm{p} \\ \bm{q} \end{bmatrix} = V\left(\left(\hat{Y}\hat{X}\right)^T + I_{2n+m}\right)\bm{u}, \enspace \gamma = -\bm{e}^T\hat{Y}\bm{u}, \enspace \bm{w} = \bm{p} - \bm{q}
 \]
 
 \subsection{Robust SVM \cite{rsvm}}
 
-Finally we reach the robust SVM, the main model we wish to evaluate in this paper, in comparison to the non-robust approaches. In practice, the input data is sensitive to error, be it measurement error, data uncertainty, noise, etc. The robust approach makes no assumption on the nature of this uncertainty other than that, for some radius $r_i>0$, $i=1,\dots,m$, each data point is bounded in an $n$-dimensional ball:
+Finally we reach the robust SVM, the main model we wish to evaluate in this paper, in comparison to the non-robust approaches. In practice, input data is sensitive to error, be it measurement error, data uncertainty, noise, etc. This is particularly evident in medical applications, such as breast cancer diagnosis. The robust approach makes no assumption on the nature of this uncertainty other than that, for some radius $r_i>0$, $i=1,\dots,m$, each data point is bounded in an $n$-dimensional ball:
 \[
 \bm{x}_i\in\mathcal{U}_i(r_i) = \bar{\bm{x}}_i + r_i\mathbb{B}_n, \quad i=1,\dots,m
 \]
-where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\right\}$ is an $n$-dimensional ball. The robust methodology aims to take this uncertainty into account, and so find a solution to our standard SVM problem that is feasible (satisfies all constraints) no matter where the data points lie in their uncertainty sets $\mathcal{U}_i$:
+where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\right\}$ is an $n$-dimensional unit ball. The robust methodology aims to take this uncertainty into account, and so find a solution to our standard SVM problem that is feasible (satisfies all constraints) no matter where the data points lie in their uncertainty sets $\mathcal{U}_i$:
 \begin{eqnarray*}
 & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m} & \frac{1}{2}\Vert \bm{w} \Vert_2^2 + \lambda\bm{e}^T\bm{\xi}
 \\
@@ -241,7 +243,7 @@ where $\mathbb{B}_n = \left\{\bm{v}\in\mathbb{R}^n : \Vert \bm{v}\Vert_2\leq 1\r
 \\
 & & \xi_i \geq 0, \enspace i=1,\dots,m, 
 \end{eqnarray*}
-Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into a second-order cone program, that no longer has the semi-infinite constraints posed by the for-all quantifier:
+Following the robust methodology and the approach in \cite{rsvm}, we reformulate the above into an (exact) second-order cone program, that no longer has the semi-infinite constraints posed by the for-all quantifier:
 \begin{eqnarray*}
 (rSVM) & \ds\min_{\bm{w}\in\mathbb{R}^n, \gamma, \bm{\xi}\in\mathbb{R}^m, t_1, t_2} & \frac{1}{2}t_1^2 + \lambda t_2
 \\
@@ -257,29 +259,31 @@ Notice that in the case where there is no uncertainty (i.e. $r_i=0$, $i=1,\dots,
 
 \subsection*{Simple Comparison}
 
-A simple comparison between the four methods is demonstrated below. The plots were generated with \texttt{svms\_example.m}, and can also be examined interactively with the accompanying MATLAB Live script.
+A simple comparison between the four methods is demonstrated below. The plots were generated with \texttt{svms\_example.m}, and can also be examined interactively with the accompanying Jupyter notebook.
 
 \begin{figure}[hbt!]
-	\begin{subfigure}{.5\textwidth}
+	\begin{subfigure}{.48\textwidth}
 		\centering
 		\captionsetup{font=footnotesize}
 		\includegraphics[width=\linewidth]{stand}
-		\caption{Standard SVM model. Support vectors in green.}
+		\caption{Standard SVM model. Support vectors are in green and margins indicated by dashed blue lines. Classifier is the red line.}
 	\end{subfigure}
-	\begin{subfigure}{.5\textwidth}
+	\hfill
+	\begin{subfigure}{.48\textwidth}
 		\centering
 		\captionsetup{font=footnotesize}
 		\includegraphics[width=\linewidth]{l1}
-		\caption{$L_1$-SVM model.}
+		\caption{$L_1$-SVM model. Notice the gradient of the classifier; the $L_1$ regularisation has shrunk the weight in the second dimension.}
 	\end{subfigure}
 	\newline
-	\begin{subfigure}{.5\textwidth}
+	\begin{subfigure}{.48\textwidth}
 		\centering
 		\captionsetup{font=footnotesize}
 		\includegraphics[width=\linewidth]{dr}
-		\caption{DrSVM model.}
+		\caption{DrSVM model. Whilst the (soft) margin is larger than previous methods, there are fewer misclassified examples. }
 	\end{subfigure}
-	\begin{subfigure}{.5\textwidth}
+	\hfill
+	\begin{subfigure}{.48\textwidth}
 		\centering
 		\captionsetup{font=footnotesize}
 		\includegraphics[width=\linewidth]{robust}
@@ -298,7 +302,38 @@ In order to evaluate the worth of the rSVM method in comparison to the SVM, the 
 	\item We will then train our four models on this perturbed training set. 
 	\item The four models will then be tested on the \emph{original} test set, and evaluated on (a) their accuracy, and (b) their F1 score. 
 \end{itemize}
-The motivation behind this is as follows: given a noisy dataset, we will be testing how well our four models can classify true data. 
+The motivation behind this is as follows: given a noisy dataset, we will be testing how well our four models can classify true data; in other words, we are testing the resilience of the models to uncertainty. We repeat this process for ten simulations, and report the first five accuracies/F1-scores for the methods, as well as the average over all simulations. The uncertainty radii $r_i$ were chosen in the range $[0.0.5]$, which is interpreted as allowing the data to be perturbed within half a standard deviation (as our data were normalised in preprocessing). 
+
+We also note that, before running any experiments on the test set, a 5-folds cross validation was performed to tune the hyperparameters for each of the four models. 
+
+\begin{table}[H]
+	\centering
+	\captionsetup{font=footnotesize}
+	\begin{tabular}{| c || c | c | c | c | c || c |}
+		\hline
+		\textbf{Model} & \textbf{Sim.	1} & \textbf{Sim. 2} & \textbf{Sim. 3} & \textbf{Sim. 4} & \textbf{Sim. 5} & \textbf{Average} 
+		\tline\hline
+		Standard SVM & 0.9737  &  0.9561 &   0.9737     &    0   & 0.9737 & 0.8728
+		\tline\hline
+		$L_1$-SVM & 0.9561 &   0.9561  &  0.9649  &  0.9561   & 0.9561 & 0.9588
+		\tline\hline
+		DrSVM & 0.9649  &  0.9825 &   0.9561  &  0.9561  &  0.9649 & 0.9675
+		\tline\hline
+		Robust SVM & 0.9561  &  0.9649 &   0.9649  &  0.9649   & 0.9474 & 0.9614
+
+		\tline\hline
+	\end{tabular}
+	\caption{Accuracy scores for the four SVM models under uncertainty. Sim $i$ is the accuracy score for the $i^{\rm th}$ simulation; Average is the average accuracy score over 10 simulations.}
+\end{table}
+
+
+As we can see, the standard SVM and the $L_1$-SVM are not as resilient to robustness, as they achieve a lower accuracy than the robust model, which is more conservative. In particular, notice that for simulation 4 the reported accuracy and F1-score for the standard model is 0; this corresponds to the problem being infeasible. In other words, the standard model failed to even \emph{find} a classifier due to the data uncertainty. It is possible that a different hyperparameter value may have remedied this. 
+
+Interestingly, the DrSVM is incredibly resilient; no infeasible instances were reported and it maintained the highest accuracy of them all. One possible explanation is due to the feature observed in Figure (c): the DrSVM determines a larger margin than the other models, which would help provide robustness in the face of perturbed data. 
+
+\section*{Conclusion}
+
+In this report we have demonstrated that (a) the standard SVM formulation is a well-founded classification model in comparison to some other models (decision trees, naive Bayes, and neural networks) on a real dataset, and (b) in the face of data uncertainty, it is necessary to perform some extra work in order to find a classifier, either by adding an extra regularisation term, as in DrSVM, or by incorporating the degree of the uncertainty into the model itself, as in the robust SVM. 
 
 \begin{thebibliography}{99}
 

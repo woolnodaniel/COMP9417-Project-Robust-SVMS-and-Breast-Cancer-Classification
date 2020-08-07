@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.99999 (MiKTeX 2.9.6630 64-bit) (preloaded format=xelatex 2018.5.22)  6 AUG 2020 13:59
+This is XeTeX, Version 3.14159265-2.6-0.99999 (MiKTeX 2.9.6630 64-bit) (preloaded format=xelatex 2018.5.22)  7 AUG 2020 17:52
 entering extended mode
 **./report.tex
 (report.tex
@@ -518,6 +518,12 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 63.
 "
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
+Overfull \hbox (11.4909pt too wide) in paragraph at lines 77--78
+[][][][][][] [] [][][] [] [][][][][][][][][][][][] [] [][][][][][][][] [][] [][
+][][][][][] [][] [][][][][][] [][] [][][][] [][] [][][] [][] [][][][][][] [][] 
+[][][][][][] [][] [][][][][][][][][][][][][][]$\TU/lmr/m/n/10.95 .
+ []
+
 
 Package Fancyhdr Warning: \headheight is too small (12.0pt): 
 Make it at least 13.59999pt.
@@ -538,24 +544,14 @@ File: dr.jpg Graphic file (type bmp)
 <dr.jpg>
 File: robust.jpg Graphic file (type bmp)
 <robust.jpg>
-
-Overfull \hbox (2.43091pt too wide) in paragraph at lines 263--288
-[]$[]$ $[]$ 
- []
-
-
-Overfull \hbox (2.43091pt too wide) in paragraph at lines 263--288
-[]$ $[]$ 
- []
-
-[6] [7] [8] (report.aux) ) 
+ [6] [7] [8] [9] (report.aux) ) 
 Here is how much of TeX's memory you used:
  6875 strings out of 427836
  91076 string characters out of 3148321
- 221193 words of memory out of 3000000
+ 222193 words of memory out of 3000000
  10685 multiletter control sequences out of 15000+200000
  19087 words of font info for 85 fonts, out of 3000000 for 9000
  1328 hyphenation exceptions out of 8191
  42i,14n,43p,679b,467s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on report.pdf (8 pages).
+Output written on report.pdf (9 pages).
