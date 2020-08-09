@@ -1,0 +1,19 @@
+Requirements:
+
+  *  Parts 1 and 2 (preprocessing/basic models) do not need any special packages. The (Python) packages needed are:
+	-  Section 1 (preprocess.py) : Numpy, Pandas, MatPlotLib, Seaborn, Sys, Argparse
+	-  Section 2 (basic_models.py) : Pandas, Numpy, Argparse, Sklearn
+  *  Parts 3 and 4: To use/run the corresponding MATLAB files you will need:
+	-  MATLAB locally installed (ideally r2019a or later, as the files were built on r2019a)
+	-  The YALMIP package installed
+	-  The MOSEK optimisation package (academic license available for free) and linked to YALMIP.
+     If also wanting to run the Jupyter notebooks that can be found in the supplementary material at
+
+		https://github.com/woolnodaniel/COMP9417-Project-Robust-SVMS-and-Breast-Cancer-Classification
+
+     then you will also need to have connected MATLAB to the Jupyter kernel. To do this you will need the following packages:
+	-  MATLABs Engine API for Python (see 
+
+		https://au.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html
+	
+	- THe anaconda/pip packages metakernel, matlab_kernel, and pymatbridge. 
